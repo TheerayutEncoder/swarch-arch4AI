@@ -84,26 +84,35 @@ inference service ระยะไกล **Patterns:** cascade (threshold 0.7) + 
 ```mermaid
 C4Container
     title CampusEats owner alerts (Scenario A): container diagram
-    Person(customer, "Customer", "Posts restaurant reviews (peak 40/s)")
-    Person(owner, "Restaurant owner", "Receives negative-review alerts on phone")
+
+    Person(customer, "Customer", "Posts reviews, peak 40/s")
+
     System_Boundary(campuseats, "CampusEats") {
-        Container(gateway, "API gateway", "Python, FastAPI", "Single entry point for clients")
-        Container(review, "Review service", "Python, FastAPI + small model (library)", "Saves review; cache lookup; small model; cascade decision; 1 s timeout fallback to pending")
-        ContainerDb(cache, "Prediction cache", "In-process LRU inside the review service", "Normalised text -> label, keyed by model version")
-        Container(inference, "Inference service", "Python, FastAPI, large model", "Large model only; max 4 concurrent calls (20 calls/s)")
-        Container(notify, "Notification service", "Push (FCM/APNs)", "Sends alert for negative labels")
-        Container(batch, "Re-scoring job", "Scheduled worker", "Labels pending reviews later; no alert")
-        ContainerDb(db, "Review store", "Database", "Reviews with label, status, model version")
+        Container(gateway, "API gateway", "Python, FastAPI", "Single entry point")
+        Container(review, "Review service", "FastAPI + small model + LRU cache", "Cascade at 0.7; 1 s timeout, then pending")
+        Container(inference, "Inference service", "FastAPI + large model", "Max 20 calls/s")
+        Container(notify, "Notification service", "Push (FCM/APNs)", "Alerts on negative labels")
+        ContainerDb(db, "Review store", "Database", "Label, status, model version")
+        Container(batch, "Re-scoring job", "Scheduled worker", "Labels pending reviews; no alert")
     }
-    Rel(customer, gateway, "Posts review", "HTTPS/JSON")
-    Rel(gateway, review, "Forwards", "HTTP/JSON")
-    Rel(review, cache, "Get/put prediction", "in-process")
-    Rel(review, inference, "POST /predict only when small confidence < 0.7", "REST, 1 s timeout")
-    Rel(review, db, "Saves review (scored or pending)", "SQL")
-    Rel(review, notify, "Negative label -> alert", "async event")
-    Rel(notify, owner, "Push notification within 2 s", "Push")
+
+    Boundary(phones, "Owners' phones") {
+        Person(owner, "Restaurant owner", "Gets negative-review alerts")
+    }
+
+    Rel(customer, gateway, "Posts review", "HTTPS")
+    Rel(gateway, review, "Forwards", "HTTP")
+    Rel(review, inference, "Only if confidence < 0.7", "REST, 1 s timeout")
+    Rel(review, notify, "Negative label", "async event")
+    Rel(review, db, "Saves review", "SQL")
     Rel(batch, db, "Reads pending, writes label", "SQL")
-    Rel(batch, inference, "Scores pending off-peak", "REST")
+    Rel(batch, inference, "Scores pending, off-peak", "REST")
+    Rel(notify, owner, "Push within 2 s", "Push")
+
+    UpdateRelStyle(gateway, review, $offsetX="-25", $offsetY="-40")
+    UpdateRelStyle(review, inference, $offsetX="-55", $offsetY="-45")
+    UpdateRelStyle(batch, db, $offsetX="-75", $offsetY="40")
+
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
 
