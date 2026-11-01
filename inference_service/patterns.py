@@ -39,7 +39,10 @@ async def cascade(text, small, large, threshold):
     # Check: python -m pytest tests/test_task2_cascade.py -v
     #   (confident -> "small" and 0 large calls; unsure -> "large";
     #    confidence == threshold -> "small"; threshold 1.0 -> always "large")
-    raise NotImplementedError("Task 2: implement cascade() in inference_service/patterns.py")
+    answer = small.predict(text)
+    if answer["confidence"] >= threshold:
+        return answer
+    return await large.predict(text)
 
 
 # ---------------------------------------------------------------- Task 3
