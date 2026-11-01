@@ -78,7 +78,7 @@ inference service ระยะไกล **Patterns:** cascade (threshold 0.7) + 
   ซึ่งอัปเดตยอดนับแต่ไม่ส่ง alert "real-time" ที่มาช้า
 - เฉพาะ label `negative` จาก large model, จาก cache หรือจาก small model ที่ ≥ threshold เท่านั้นที่ trigger
   notification service (ทางเลือกที่เข้มกว่า: ส่ง alert เฉพาะ negative ที่ large model ยืนยันแล้ว
-  ได้ alert ผิดน้อยลงแลกกับ large call ที่มากขึ้นสำหรับ negative ให้พูดถึงเป็น trade-off)
+  ได้ alert ผิดน้อยลงแลกกับ large call ที่มากขึ้นสำหรับ negative ซึ่งเป็น trade-off ระหว่าง accuracy กับ cost)
 
 
 ```mermaid
@@ -151,17 +151,10 @@ alert และ re-score ด้วย batch job ภายหลัง
   review service ทำให้สอง deployment ผูกกัน (อัปเดต model หมายถึงต้อง redeploy review service) cache ต้องถูก
   invalidate เมื่อเปลี่ยน model review ที่ pending จะไม่ได้ alert แบบ real-time เลย
 
-**Alternatives considered:** 
-- T1 model as a service ใช้ large อย่างเดียว: แม่นยำที่สุด แต่ต้องใช้ 40 calls/s เป็นสองเท่าของ capacity ปฏิเสธ
-- T2 small model as a library อย่างเดียว: เร็วและฟรี แต่ความแม่นยำ 72.5% ทำให้ alert ผิดเยอะเกินไป ปฏิเสธ
-- T4 async/batch: ปกป้อง capacity ได้ แต่การให้คะแนนแบบเข้าคิวรับประกัน alert ภายใน 2 s ไม่ได้ เก็บไว้ใช้เฉพาะกับ review ที่ pending
+**Alternatives considered:** at least one topology you rejected, and why.
 
 *อย่างน้อยหนึ่ง topology ที่ไม่เลือก และเหตุผล*
 
-- QRs: รับ review ได้ 100% แม้ออฟไลน์ (availability), label พร้อมภายในสิ้นวัน (freshness ≤ หลายชั่วโมง ไม่ใช่วินาที),
-  ความแม่นยำ ≥ 90%
-- การออกแบบ: T2 บน kiosk (small model + local store-and-forward queue) ร่วมกับ T4 batch ที่ backend kiosk บันทึก
-  ทุก review ไว้ในเครื่อง (pending) แล้ว sync เมื่อ Wi-Fi กลับมาผ่าน broker queue batch job ตอนกลางคืนหรือเป็นระยะจะรัน
-  cascade + cache กระจาย large call ไปตามเวลา (ต่ำกว่า 20/s มาก) และเติม label ให้ครบก่อนสิ้นวัน
-- หลักฐาน: `t1-after` (fallback เป็น pending ทำให้ review หาย 0 รายการ), `t0-small` (72.5% ไม่พอสำหรับเป็น label สุดท้าย),
-  `t2-0.7`/`t3-cache` (ต้นทุนของการให้คะแนนแบบ batch: large call 38%)
+- T1 model as a service ใช้ large อย่างเดียว: แม่นยำที่สุด แต่ต้องใช้ 40 calls/s เป็นสองเท่าของ capacity ปฏิเสธ
+- T2 small model as a library อย่างเดียว: เร็วและฟรี แต่ความแม่นยำ 72.5% ทำให้ alert ผิดเยอะเกินไป ปฏิเสธ
+- T4 async/batch: ปกป้อง capacity ได้ แต่การให้คะแนนแบบเข้าคิวรับประกัน alert ภายใน 2 s ไม่ได้ เก็บไว้ใช้เฉพาะกับ review ที่ pending

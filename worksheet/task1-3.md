@@ -157,6 +157,4 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 *ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่ไม่มีพูดถึงใน lecture*
 
-- percentile ที่คิดจาก request ที่สำเร็จเท่านั้นซ่อน failure ไว้ (`t1-before` p50 ดูดีกว่า)
-- timeout เปลี่ยนการค้างแบบเงียบให้เป็นการเสื่อมถอยที่มองเห็นได้และมีขอบเขต แต่มันย้าย p95 ไปอยู่ ≈ ค่า timeout
-- ต้นทุนและความแม่นยำของ cascade ไม่เป็นเส้นตรง: 0.8 → 0.9 เพิ่ม large call 13% โดยความแม่นยำไม่เพิ่มเลย
+percentile ที่คิดจาก request ที่สำเร็จเท่านั้นซ่อน failure ไว้: ใน `t1-before` p50 (254 ms) ดูดีกว่า baseline (483 ms) ทั้งที่มี review หายไป 18 รายการ จึงต้องดู `errors` และเวลารันควบคู่กับ latency เสมอ
