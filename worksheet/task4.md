@@ -8,7 +8,7 @@ This is **individual work**: each student completes and submits their own copy, 
 
 *งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง ใน fork ของตัวเอง*
 
-**Scenario (A, B or C) / Scenario ที่เลือก:**
+**Scenario (A, B or C) / Scenario ที่เลือก:** A (Owner alerts)
 
 Choose **one** scenario below. If the last digit of your student ID is odd, take A or B; if it is even, take B or C. Use your measurements from Tutorial 6 as evidence: cite run names from `results/runs.csv`. Answer in Thai or English.
 
@@ -81,7 +81,7 @@ inference service ระยะไกล **Patterns:** cascade (threshold 0.7) + 
   ได้ alert ผิดน้อยลงแลกกับ large call ที่มากขึ้นสำหรับ negative ให้พูดถึงเป็น trade-off)
 
 
-```mermaid  
+```mermaid
 C4Container
     title CampusEats owner alerts (Scenario A): container diagram
     Person(customer, "Customer", "Posts restaurant reviews (peak 40/s)")
@@ -89,7 +89,7 @@ C4Container
     System_Boundary(campuseats, "CampusEats") {
         Container(gateway, "API gateway", "Python, FastAPI", "Single entry point for clients")
         Container(review, "Review service", "Python, FastAPI + small model (library)", "Saves review; cache lookup; small model; cascade decision; 1 s timeout fallback to pending")
-        ContainerDb(cache, "Prediction cache", "In-memory LRU (per instance)", "Normalised text -> label, keyed by model version")
+        ContainerDb(cache, "Prediction cache", "In-process LRU inside the review service", "Normalised text -> label, keyed by model version")
         Container(inference, "Inference service", "Python, FastAPI, large model", "Large model only; max 4 concurrent calls (20 calls/s)")
         Container(notify, "Notification service", "Push (FCM/APNs)", "Sends alert for negative labels")
         Container(batch, "Re-scoring job", "Scheduled worker", "Labels pending reviews later; no alert")
